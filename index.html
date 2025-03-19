@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Watchlist</title>
+    <style>
+        .movie-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .watchlist-button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .watchlist-button.added {
+            background-color: #f44336;
+        }
+
+        .watchlist-button.added::after {
+            content: " - Remove";
+        }
+        .watchlist-button::after{
+            content: " + Add";
+        }
+
+        .watchlist-button.adding {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>My Movie Watchlist</h1>
+
+    <div id="movie-list">
+        </div>
+
+    <script>
+        // Mock API (replace with your actual API)
+        const mockAPI = {
+            saveWatchlist: (watchlist) => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        console.log("Mock API: Watchlist saved:", watchlist);
+                        resolve();
+                    }, 500); // Simulate network delay
+                });
+            },
+            loadWatchlist: () => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
+                        console.log("Mock API: Watchlist loaded:", savedWatchlist);
+                        resolve(savedWatchlist);
+                    }, 500); // Simulate network delay
+                });
+            }
+        };
+
+        let watchlist = [];
+
+        async function loadWatchlist() {
+            try {
+                watchlist = await mockAPI.loadWatchlist();
+                updateUI();
+            } catch (error) {
+                console.error("Error loading watchlist:", error);
+            }
+        }
+
+        async function saveWatchlist() {
+            try {
+                await mockAPI.saveWatchlist(watchlist);
+                localStorage.setItem("watchlist", JSON.stringify(watchlist));
+            } catch (error) {
+                console.error("Error saving watchlist:", error);
+            }
+        }
+
+        function toggleWatchlist(movie) {
+            const index = watchlist.findIndex((item) => item.id === movie.id);
+            if (index === -1) {
+                watchlist.push(movie);
+            } else {
+                watchlist.splice(index, 1);
+            }
+            saveWatchlist();
+            updateUI();
+        }
+
+        function updateUI() {
+            const movieList = document.getElementById("movie-list");
+            movieList.innerHTML = ""; // Clear existing movies
+
+            const movies = [
+                { id: 1, title: "Movie 1", poster: "movie1.jpg" },
+                { id: 2, title: "Movie 2", poster: "movie2.jpg" },
+                { id: 3, title: "Movie 3", poster: "movie3.jpg" },
+                { id: 4, title: "Movie 4", poster: "movie4.jpg" },
+                { id: 5, title: "Movie 5", poster: "movie5.jpg" },
+            ];
+
+            movies.forEach((movie) => {
+                const movieCard = document.createElement("div");
+                movieCard.classList.add("movie-card");
+                movieCard.innerHTML = `
+                    <h3>${movie.title}</h3>
+                    <img src="${movie.poster}" alt="${movie.title}" width="150">
+                    <button class="watchlist-button" data-movie-id="${movie.id}">Add to Watchlist</button>
+                `;
+                movieList.appendChild(movieCard);
+
+                const button = movieCard.querySelector(".watchlist-button");
+                const isAdded = watchlist.some((item) => item.id === movie.id);
+                if (isAdded) {
+                    button.classList.add("added");
+                }
+
+                button.addEventListener("click", () => {
+                    button.classList.add("adding");
+                    setTimeout(()=> {
+                        button.classList.remove("adding");
+                        toggleWatchlist(movie);
+                    }, 200);
+
+                });
+            });
+        }
+
+        loadWatchlist();
+    </script>
+</body>
+</html>
